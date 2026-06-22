@@ -7,7 +7,12 @@ import 'line_height_parser.dart';
 
 /// Checks if the given [tag] corresponds to an inline HTML element.
 ///
-/// Inline elements include: 'i', 'em', 'u', 'ins', 's', 'del', 'b', 'strong', 'sub', 'sup'.
+/// Inline elements include: 'i', 'em', 'u', 'ins', 's', 'del', 'b', 'strong',
+/// 'sub', 'sup', 'mark'.
+///
+/// `mark` is treated as inline so its `background-color` style is parsed into a
+/// Quill `background` attribute (highlight); without it the tag is unrecognized
+/// and the highlight is dropped while its text still renders.
 ///
 /// Parameters:
 /// - [tag]: The HTML tag name to check.
@@ -15,7 +20,7 @@ import 'line_height_parser.dart';
 /// Returns:
 /// `true` if [tag] is an inline element, `false` otherwise.
 bool isInline(String tag) {
-  return ["i", "em", "u", "ins", "s", "del", "b", "strong", "sub", "sup"]
+  return ["i", "em", "u", "ins", "s", "del", "b", "strong", "sub", "sup", "mark"]
       .contains(tag);
 }
 

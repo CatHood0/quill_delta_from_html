@@ -28,6 +28,9 @@ extension NodeExt on Element {
 
   ///Ensure to detect span html tags
   bool get isSpan => localName == 'span';
+
+  ///Ensure to detect mark (highlight) html tags
+  bool get isMark => localName == 'mark';
   bool get isBlock =>
       isList || isHeader || isDivBlock || isBlockquote || isCodeBlock;
   bool get isInline =>

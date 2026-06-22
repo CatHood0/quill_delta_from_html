@@ -2,9 +2,9 @@ import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter_quill_delta_from_html/parser/extensions/node_ext.dart';
 import 'package:flutter_quill_delta_from_html/parser/html_to_operation.dart';
 import 'package:flutter_quill_delta_from_html/parser/html_utils.dart';
+import 'package:flutter_quill_delta_from_html/parser/node_processor.dart';
 import 'package:flutter_quill_delta_from_html/parser/typedef/typedefs.dart';
 import 'package:html/dom.dart' as dom;
-import 'package:flutter_quill_delta_from_html/parser/node_processor.dart';
 
 /// Default implementation of `HtmlOperations` for converting common HTML to Delta operations.
 ///
@@ -59,10 +59,19 @@ class DefaultHtmlToOperations extends HtmlOperations {
       }
       inlineAttributes.addAll(styleAttributes);
     }
+
+    // Check if paragraph is inside a list item
+    final isInsideListItem = element.parent?.localName == 'li';
+
     final nodes = element.nodes;
     //this store into all nodes into a paragraph, and
     //ensure getting all attributes or tags into a paragraph
     for (final node in nodes) {
+      // Skip <br> tags if inside a list item
+      if (isInsideListItem && node is dom.Element && node.isBreakLine) {
+        continue;
+      }
+
       processNode(
         node,
         inlineAttributes,
@@ -75,6 +84,12 @@ class DefaultHtmlToOperations extends HtmlOperations {
     if (blockAttributes.isNotEmpty) {
       blockAttributes.removeWhere((key, value) => value == null);
       delta.insert('\n', blockAttributes);
+    } else {
+      // Insert newline if parent is not a list, OR if parent is a list but current element is not the last child of <li>
+      final parent = element.parent;
+      if (parent?.isList == false) {
+        delta.insert('\n');
+      }
     }
 
     return delta.toList();
@@ -239,6 +254,10 @@ class DefaultHtmlToOperations extends HtmlOperations {
     final List<dom.Element> items =
         element.children.where((child) => child.localName == 'li').toList();
 
+    final startAttr = element.attributes["start"];
+    if (startAttr != null) {
+      attributes["start"] = startAttr;
+    }
     if (tagName == 'ul') {
       attributes['list'] = 'bullet';
     } else if (tagName == 'ol') {

@@ -170,7 +170,8 @@ class HtmlToDelta {
     //ensure insert a new line at the final to avoid any conflict with assertions
     if (delta.isNotEmpty) {
       final Operation lastOpdata = delta.last;
-      final bool lastDataIsNotNewLine = lastOpdata.data.toString() != '\n';
+      final bool lastDataIsNotNewLine = lastOpdata.data.toString() != '\n' &&
+          !lastOpdata.data.toString().endsWith('\n');
       final bool hasAttributes = lastOpdata.attributes != null;
       if (lastDataIsNotNewLine && hasAttributes ||
           lastDataIsNotNewLine ||
@@ -306,8 +307,15 @@ class HtmlToDelta {
       operations.addAll(ops);
       // Check if the nextElement is a block AND if the last
       // operation already has a new line, this would otherwise
-      // create a double new line
-      if (nextIsBlock && operations.lastOrNull?.data != '\n') {
+      // create a double new line.
+      // A block element's last op is the merged "text\n" insert (not a bare
+      // "\n"), so compare against the trailing newline — matching the
+      // end-of-document guard above. The previous `!= '\n'` check missed the
+      // merged case and injected a spurious empty paragraph before every block
+      // (e.g. a blank line above a <ul> that follows a <p>).
+      final lastData = operations.lastOrNull?.data?.toString();
+      final lastEndsWithNewLine = lastData?.endsWith('\n') ?? false;
+      if (nextIsBlock && !lastEndsWithNewLine) {
         operations.add(Operation.insert('\n'));
       }
     }
